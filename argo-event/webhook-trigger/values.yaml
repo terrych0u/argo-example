@@ -1,0 +1,26 @@
+namespace: argo
+
+serviceAccount: argo-events
+
+image:
+  pullPolicy: Always
+  event:
+    repository: argoproj/webhook-gateway
+    tag: v0.12
+  gateway:
+    repository: argoproj/gateway-client
+    tag: v0.12
+  sensor:
+    repository: argoproj/sensor
+    tag: v0.12
+
+service:
+  type: ClusterIP
+  externalPort: 12000
+  internalPort: 12000
+
+event:
+  jobName: trigger-demo-job
+  type: webhook
+  path: /trigger
+  method: POST

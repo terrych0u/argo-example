@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+{{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+{{- else }}
+  namespace: default
+{{- end }}
+  name: {{ template "fullname" . }}-event
+spec:
+  type: {{ .Values.event.type | quote }}
+  webhook:
+    event:
+      port: {{ .Values.service.externalPort | quote }}
+      endpoint: {{ .Values.event.path | quote }}
+      method: {{ .Values.event.method | quote }}

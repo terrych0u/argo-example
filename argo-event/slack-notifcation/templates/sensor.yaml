@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+{{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+{{- else }}
+  namespace: default
+{{- end }}
+  name: {{ template "fullname" . }}-sensor
+  labels: 
+    sensors.argoproj.io/sensor-controller-instanceid: argo-events
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount }}
+      containers:
+        - name: sensor
+          image: "{{ .Values.image.sensor.repository }}:{{ .Values.image.sensor.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+  dependencies:
+    - name: test-dep
+      gatewayName: {{ template "fullname" . }}-gateway
+      eventName: event
+  subscription:
+    http:
+      port: 9300
+  triggers:
+    - template:
+        name: {{ template "fullname" . }}-trigger
+        k8s:
+          group: argoproj.io
+          version: v1alpha1
+          resource: workflows
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: slack-notification-
+              spec:
+                entrypoint: {{ template "fullname" . }}
+                arguments:
+                  parameters:
+                  - name: message
+                    # the value will get overridden by event payload from test-dep
+                    value: "hello world"
+                templates:
+                - name: {{ template "fullname" . }}
+                  serviceAccountName: {{ .Values.serviceAccount }}
+                  inputs:
+                    parameters:
+                    - name: message
+                  container:
+                    image: suhlig/slack-message:latest
+                    args:
+                      - --from 
+                      - argo-event
+                      - --color 
+                      - {{ .Values.slack.color }}
+                      - $(MESSAGE)
+                    env:
+                    - name: SLACK_WEBHOOK_URL
+                      value: {{ .Values.slack.url }}
+                    - name: MESSAGE
+                      value: {{ print "{{inputs.parameters.message}}" | quote }}
+          parameters:
+            - src:
+                dependencyName: test-dep
+                dataKey: body.message
+              dest: spec.arguments.parameters.0.value

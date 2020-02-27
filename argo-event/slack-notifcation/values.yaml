@@ -1,0 +1,31 @@
+namespace: argo
+
+serviceAccount: argo-events
+
+image:
+  pullPolicy: Always
+  event:
+    repository: argoproj/webhook-gateway
+    tag: v0.12
+  gateway:
+    repository: argoproj/gateway-client
+    tag: v0.12
+  sensor:
+    repository: argoproj/sensor
+    tag: v0.12
+
+service:
+  type: ClusterIP
+  externalPort: 12000
+  internalPort: 12000
+
+event:
+  type: webhook
+  path: /slack
+  method: POST
+
+slack:
+  color: "FF0000"
+  url: {}
+    # incoming webhook url
+    # https://hooks.slack.com/services/xxxxxxx/xxxxxxx/xxxxxxxx

@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Gateway
+metadata:
+{{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+{{- else }}
+  namespace: default
+{{- end }}
+  name: {{ template "fullname" . }}-gateway
+  labels: 
+    gateways.argoproj.io/gateway-controller-instanceid: argo-events
+spec:
+  replica: 1
+  type: webhook
+  eventSourceRef:
+    name: {{ template "fullname" . }}-event
+  template:
+    metadata:
+      name: {{ template "fullname" . }}-gateway
+      labels:
+        gateway-name: {{ template "fullname" . }}-gateway
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount }}
+      containers:
+        - name: gateway-client
+          image: "{{ .Values.image.gateway.repository }}:{{ .Values.image.gateway.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/gateway-client"]
+        - name: webhook-events
+          image: "{{ .Values.image.event.repository }}:{{ .Values.image.event.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/webhook-gateway"]
+  service:
+    metadata:
+      name: {{ template "fullname" . }}-gateway
+    spec:
+      type: {{ .Values.service.type }}
+      selector:
+        gateway-name: {{ template "fullname" . }}-gateway
+      ports:
+        - port: {{ .Values.service.externalPort }}
+          targetPort: {{ .Values.service.internalPort }}
+  subscribers:
+    http:
+      - "http://{{ template "fullname" . }}-sensor:9300/"
