@@ -52,15 +52,17 @@ spec:
                     parameters:
                     - name: message
                   container:
-                    image: suhlig/slack-message:latest
+                    image: terrych0u/notifier:latest
                     args:
-                      - --from 
+                      - --target
+                      - slack
+                      - --username 
                       - argo-event
                       - --color 
                       - {{ .Values.slack.color }}
                       - $(MESSAGE)
                     env:
-                    - name: SLACK_WEBHOOK_URL
+                    - name: URL
                       value: {{ .Values.slack.url }}
                     - name: MESSAGE
                       value: {{ print "{{inputs.parameters.message}}" | quote }}
