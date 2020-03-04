@@ -56,14 +56,18 @@ spec:
                     args:
                       - --target
                       - slack
-                      - --username 
-                      - argo-event
+                    {{- if .Values.slack.channel }}
+                      - --channel
+                      - {{ .Values.slack.channel }}
+                    {{- end }}
+                      - --username
+                      - {{ default "argo-event" .Values.slack.username }}
                       - --color 
                       - {{ .Values.slack.color }}
                       - $(MESSAGE)
                     env:
                     - name: URL
-                      value: {{ .Values.slack.url }}
+                      value: {{ required "URL is empty" .Values.slack.url }}
                     - name: MESSAGE
                       value: {{ print "{{inputs.parameters.message}}" | quote }}
           parameters:

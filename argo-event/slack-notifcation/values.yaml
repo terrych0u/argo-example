@@ -26,6 +26,8 @@ event:
 
 slack:
   color: "FF0000"
-  url: {}
+  channel: ""
+  username: ""
+  url: ""
     # incoming webhook url
     # https://hooks.slack.com/services/xxxxxxx/xxxxxxx/xxxxxxxx
